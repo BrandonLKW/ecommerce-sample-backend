@@ -5,6 +5,8 @@ dotenv.config();
 
 const path = require("path");
 
+const db = require("../database/database"); //to test connection
+
 const server: Express = express();
 
 //middleware block
