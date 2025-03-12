@@ -78,3 +78,37 @@ export function createUpdateStatement(
         return error.toISOString(); //KIV, to find a solution to handle the error better
     }
 }
+
+//Function to create a generic delete statement based on conditions in one table
+//Assumes conditions passed in as object with key/value pairs (e.g WHERE key1 = value1, key2 = value2)
+//returnCol is optional to pass back new id or just confirmation of successful execution
+export function createDeleteStatement(
+    tableName: string,
+    conditions: object,
+    returnCol: string
+    ) {
+    try{
+        let conditionBody = "";
+        Object.entries(conditions).forEach(([key, value], index) => {
+        if (!value) {
+            conditionBody = conditionBody.concat(`${key} = NULL`);
+        } else if (value.constructor === Date) {
+            conditionBody = conditionBody.concat(
+            `${key} = '${value.toISOString()}'`
+            );
+        } else {
+            conditionBody = conditionBody.concat(`${key} = '${value}'`);
+        }
+        if (index < Object.keys(conditions).length - 1) {
+            conditionBody = conditionBody.concat(" AND ");
+        }
+        });
+        let returnColBody = "";
+        if (returnCol) {
+        returnColBody = returnColBody.concat(`RETURNING ${returnCol}`);
+        }
+        return `DELETE FROM ${tableName} WHERE ${conditionBody} ${returnColBody}`;
+    } catch (error) {
+        return error.toISOString(); //KIV, to find a solution to handle the error better
+    }
+}
