@@ -4,8 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const path = require("path");
-
-const db = require("../database/database"); //to test connection
+const productRouter = require("./routers/productRouter");
 
 const server: Express = express();
 
@@ -14,6 +13,7 @@ server.use(express.json());
 server.use(express.static(path.join(__dirname, "dist")));
 
 //routes block
+server.use("/api/product", productRouter);
 server.get("/test", (_req: Request, res: Response) => {
     res.json({ hello: "world" });  
 });
