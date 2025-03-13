@@ -35,7 +35,7 @@ const addOrder = async (req: Response, res: Request) => {
                 orderItemList: {
                     tableName: `${orderItemTableStr}`,
                     data: orderItemList.map((item) => {
-                        const validateOrderItem = orderItemSchema.validate(item).value; //Validate each child object as well
+                        const validateOrderItem = orderItemSchema.validate(item); //Validate each child object as well
                         if (validateOrderItem.error) {
                             throw Error(validateOrderItem.error.message);
                         }
@@ -96,7 +96,7 @@ const updateOrder = async (req: Response, res: Request) => {
                 orderItemList: {
                     tableName: `${orderItemTableStr}`,
                     data: orderItemList.map((item) => {
-                        const validateOrderItem = orderItemSchema.validate(item).value; //Validate each child object as well
+                        const validateOrderItem = orderItemSchema.validate(item); //Validate each child object as well
                         if (validateOrderItem.error) {
                             throw Error(validateOrderItem.error.message);
                         }

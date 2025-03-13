@@ -28,7 +28,8 @@ export function createInsertStatement(
         }
         return `INSERT INTO ${tableName} (${colNameBody}) VALUES (${colValuesBody}) ${returnColBody}`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -73,7 +74,8 @@ export function createInsertMultipleStatement(
         });
         return `INSERT INTO ${tableName} (${columns}) VALUES ${valuesBody} RETURNING 'SUCCESS'`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error);; //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -103,14 +105,14 @@ export function createInsertWithChildrenStatement(
             let prefixValues = "";
             for (const key of Object.keys(value.data[0])) {
                 if (key.toString() !== parent_ref) {
-                prefixValues = prefixValues.concat(`${key},`);
+                    prefixValues = prefixValues.concat(`${key},`);
                 }
             }
             prefixValues = prefixValues.concat(`${parent_ref}`); //add parent reference column at the end of loop
             if (index < Object.values(childFields).length - 1) {
                 //If not last index, assign alias
                 singleChildPrefix = singleChildPrefix.concat(
-                `child${index} AS (INSERT INTO ${value.tableName} (${prefixValues})`
+                    `child${index} AS (INSERT INTO ${value.tableName} (${prefixValues})`
                 );
                 //If not second last index, add a comma
                 if (index < Object.values(childFields).length - 2) {
@@ -119,23 +121,25 @@ export function createInsertWithChildrenStatement(
                 hasMultipleChild = true;
             } else {
                 singleChildPrefix = singleChildPrefix.concat(
-                `INSERT INTO ${value.tableName} (${prefixValues})`
+                    `INSERT INTO ${value.tableName} (${prefixValues})`
                 );
             }
             let singleChildSuffix = "";
             for (const child of value.data) {
                 let oneChild = "";
                 Object.entries(child).forEach((data) => {
-                //[0] is key, [1] is value
-                //exclude parent ref if found, add new returned id at the end of loop
-                if (data[1]) {
-                    oneChild = oneChild.concat(`'${data[1]}',`);
-                } else {
-                    oneChild = oneChild.concat(`NULL,`);
-                }
+                    //[0] is key, [1] is value
+                    //exclude parent ref if found, add new returned id at the end of loop
+                    if (data[0] !== parent_ref){
+                        if (data[1]) {
+                            oneChild = oneChild.concat(`'${data[1]}',`);
+                        } else {
+                            oneChild = oneChild.concat(`NULL,`);
+                        }
+                    }
                 });
                 singleChildSuffix = singleChildSuffix.concat(
-                `(${oneChild} (SELECT id FROM parent)),`
+                    `(${oneChild} (SELECT id FROM parent)),`
                 );
             }
             childBody = childBody.concat(
@@ -149,12 +153,13 @@ export function createInsertWithChildrenStatement(
             }
         });
         if (hasMultipleChild) {
-        return `WITH parent AS (${parentBody}), ${childBody} RETURNING (SELECT id FROM parent)`;
+            return `WITH parent AS (${parentBody}), ${childBody} RETURNING (SELECT id FROM parent)`;
         } else {
-        return `WITH parent AS (${parentBody}) ${childBody} RETURNING (SELECT id FROM parent)`;
+            return `WITH parent AS (${parentBody}) ${childBody} RETURNING (SELECT id FROM parent)`;
         }
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -197,11 +202,12 @@ export function createUpdateStatement(
         });
         let returnColBody = "";
         if (returnCol) {
-        returnColBody = returnColBody.concat(`RETURNING ${returnCol}`);
+            returnColBody = returnColBody.concat(`RETURNING ${returnCol}`);
         }
         return `UPDATE ${tableName} SET ${colValuesBody} WHERE ${conditionBody} ${returnColBody}`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -247,7 +253,8 @@ export function createUpdateMultipleStatement(
         });
         return `UPDATE ${tableName} AS table1 SET ${colNameBody} FROM (VALUES ${colValuesBody}) AS table2(${colName2Body}) WHERE ${conditionsBody} RETURNING 'SUCCESS'`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -274,6 +281,9 @@ export function createUpdateWithChildrenStatement(
                 value.tableName,
                 value.data
             );
+            if (!basicQuery){
+                throw new Error("Failed createInsertMultipleStatement creation");
+            }
             const singleInsertQuery = appendInsertOrUpdateStatement(
                 value.data[0],
                 basicQuery,
@@ -301,7 +311,8 @@ export function createUpdateWithChildrenStatement(
             return `WITH parent AS (${parentBody}) ${childBody} RETURNING (SELECT id FROM parent)`;
         }
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
   }
 
@@ -335,7 +346,8 @@ export function createDeleteStatement(
         }
         return `DELETE FROM ${tableName} WHERE ${conditionBody} ${returnColBody}`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }
 
@@ -357,6 +369,7 @@ export function appendInsertOrUpdateStatement(
         });
         return `${insertQuery} ON CONFLICT(${conflict}) DO UPDATE SET ${bodyStr}`;
     } catch (error) {
-        return error.toISOString(); //KIV, to find a solution to handle the error better
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
     }
 }

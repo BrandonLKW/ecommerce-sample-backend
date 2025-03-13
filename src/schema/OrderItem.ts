@@ -5,7 +5,8 @@ export const OrderItemSchema = Joi.object().keys({
     order_id: Joi.number().optional().allow(null, ""),
     product_id: Joi.number().optional().allow(null, ""),
     unit_price: Joi.number().optional().allow(null, ""),
-    quantity: Joi.number().optional().allow(null, "")
+    quantity: Joi.number().optional().allow(null, ""),
+    product: Joi.object().optional().strip()
 });
 
 export const validate = (body: Object) => {

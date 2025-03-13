@@ -3,7 +3,7 @@ import { OrderItemSchema } from "./OrderItem";
 
 export const OrderSchema = Joi.object().keys({
     id: Joi.number().optional().allow(0).strip(), //strip id here to facilitate queryHelper.ts methods
-    user_id: Joi.string().optional().allow(null, ""),
+    user_id: Joi.number().optional().allow(null, ""),
     created_date: Joi.string().optional().allow(null, ""),
     completed_date: Joi.string().optional().allow(null, ""),
     status: Joi.string().optional().allow(null, ""),
