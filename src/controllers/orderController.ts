@@ -1,0 +1,176 @@
+import { Response, Request } from "express";
+import * as orderSchema from "../schema/Order";
+import * as orderItemSchema from "../schema/OrderItem";
+import * as queryHelper from "../util/queryHelper";
+
+const orderdb = require("../../database/database");
+
+const orderTableStr = "public.order";
+const orderItemTableStr = "public.order_item";
+
+const getAllOrders = async (req: Response, res: Request) => {
+    try {
+        const queryStr = `SELECT * FROM ${orderTableStr}`;
+        const response = await orderdb.query(queryStr);
+        res.status(201).json(response.rows);
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}
+
+const addOrder = async (req: Response, res: Request) => {
+    try {
+        const validateOrder = orderSchema.validate(req.body);
+        if (validateOrder.error){
+            return res.status(422).json({error: validateOrder.error.message});
+        }
+        //Start to setup input params for insert method in queryHelper
+        let children = {}; //Used to store child objects if populated (format of -> column name: {tableName: string, data: obj[]})
+        let excludedChildren: string[] = []; //Used to store string of child's param name if child is not populated
+        //At this point orderItemList is the only child, but future additions will follow this format
+        const orderItemList: object[] = req.body.orderItemList;
+        if (orderItemList?.length) {
+            children = {
+                ...children,
+                orderItemList: {
+                    tableName: `${orderItemTableStr}`,
+                    data: orderItemList.map((item) => {
+                        const validateOrderItem = orderItemSchema.validate(item).value; //Validate each child object as well
+                        if (validateOrderItem.error) {
+                            throw Error(validateOrderItem.error.message);
+                        }
+                        return validateOrderItem.value;
+                    }),
+                },
+            };
+        } else {
+            excludedChildren.push("orderItemList");
+        }
+        //Remove defined children from parent, to be constructed in a separate sub query in the helper
+        const parent = Object.fromEntries(
+            Object.entries(validateOrder.value).filter(
+                ([key]) =>
+                    !Object.keys(children).includes(key) &&
+                    !excludedChildren.includes(key)
+            )
+        );
+        let queryStr = "";
+        if (Object.keys(children).length > 0) {
+            queryStr = queryHelper.createInsertWithChildrenStatement(
+                orderTableStr,
+                parent,
+                children,
+                "order_id"
+            );
+        } else {
+            queryStr = queryHelper.createInsertStatement(
+                orderTableStr,
+                parent,
+                "id"
+            );
+        }
+        const response = await orderdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error adding product with query: ${queryStr}`);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const updateOrder = async (req: Response, res: Request) => {
+    try {
+        const validateOrder = orderSchema.validate(req.body);
+        if (validateOrder.error){
+            return res.status(422).json({error: validateOrder.error.message});
+        }
+        //Start to setup input params for insert method in queryHelper
+        let children = {}; //Used to store child objects if populated (format of -> column name: {tableName: string, data: obj[]})
+        let excludedChildren: string[] = []; //Used to store string of child's param name if child is not populated\
+        const orderItemList: object[] = req.body.orderItemList;
+        if (orderItemList?.length) {
+            children = {
+                ...children,
+                orderItemList: {
+                    tableName: `${orderItemTableStr}`,
+                    data: orderItemList.map((item) => {
+                        const validateOrderItem = orderItemSchema.validate(item).value; //Validate each child object as well
+                        if (validateOrderItem.error) {
+                            throw Error(validateOrderItem.error.message);
+                        }
+                        return validateOrderItem.value;
+                    }),
+                },
+            };
+        } else {
+            excludedChildren.push("orderItemList");
+        }
+        //Define WHERE conditions
+        const conditions = {
+            id: req.body.id
+        }
+        //Remove defined children from parent, to be constructed in a separate sub query in the helper
+        const parent = Object.fromEntries(
+            Object.entries(validateOrder.value).filter(
+                ([key]) =>
+                    !Object.keys(children).includes(key) &&
+                    !excludedChildren.includes(key)
+            )
+        );
+        let queryStr = "";
+        if (Object.keys(children).length > 0) {
+            queryStr = queryHelper.createUpdateWithChildrenStatement(
+                orderTableStr,
+                parent,
+                conditions,
+                children
+            );
+        } else {
+            queryStr = queryHelper.createUpdateStatement(
+                orderTableStr,
+                parent,
+                conditions,
+                "id"
+            );
+        }
+        const response = await orderdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error updating product with query: ${queryStr}`);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const deleteOrder = async (req: Response, res: Request) => {
+    try {
+        const validateProduct = orderSchema.validate(req.body);
+        if (validateProduct.error){
+            return res.status(422).json({error: validateProduct.error.message});
+        }
+        //Set delete conditions
+        const conditions = {
+            id: req.body.id, //use req.body because validate will strip the id
+        };
+        const queryStr = queryHelper.createDeleteStatement(orderTableStr, conditions, "id");
+        const response = await orderdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error updating product with query: ${queryStr}`);
+        }
+    } catch (error) {
+
+    }
+}
+
+module.exports = {
+    getAllOrders,
+    addOrder,
+    updateOrder,
+    deleteOrder
+};
