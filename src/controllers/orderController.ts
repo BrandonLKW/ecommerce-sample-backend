@@ -25,12 +25,31 @@ const getOrdersByStatus = async (req: Response, res: Request) => {
         const conditions = {
             status: status.toUpperCase()
         }
-        const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions)
+        const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions);
         const response = await orderdb.query(queryStr);
         if (response.rows.length > 0){
             res.status(201).json(response.rows);
         } else {
             throw new Error(`Error running getOrders with query: ${queryStr}`);
+        }
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}
+
+const getOrderItemsByOrderId = async (req: Response, res: Request) => {
+    try {
+        const { id } = req.params;
+        const selectFields = ["*"];
+        const conditions = {
+            order_id: id
+        }
+        const queryStr = queryHelper.createSelectWithConditionsStatement(orderItemTableStr, selectFields, conditions);
+        const response = await orderdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error running getOrderItems with query: ${queryStr}`);
         }
     } catch (error) {
         res.status(500).json({ error });
@@ -190,6 +209,7 @@ const deleteOrder = async (req: Response, res: Request) => {
 module.exports = {
     getAllOrders,
     getOrdersByStatus,
+    getOrderItemsByOrderId,
     addOrder,
     updateOrder,
     deleteOrder
