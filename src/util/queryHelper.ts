@@ -373,3 +373,28 @@ export function appendInsertOrUpdateStatement(
         return "ERROR";
     }
 }
+
+//Function to create a generic select statement in one table
+//Assumes object with key/value pairs being passed in as conditions
+//key/value pairs are cycled to write string in order (e.g WHERE key1=value1, key2=value2)
+//selectFields param denote returned fields, use * to return entire row
+export function createSelectWithConditionsStatement(
+    tableName: string,
+    selectFields: string[],
+    conditions: object
+) {
+    try {
+        const selectBody = selectFields.join(", ");
+        let conditionsBody = "";
+        Object.entries(conditions).forEach(([key, value], index) => {
+            conditionsBody = conditionsBody.concat(`${key} = '${value}'`);
+            if (index < Object.keys(conditions).length - 1) {
+                conditionsBody = conditionsBody.concat(", ");
+            }
+        });
+        return `SELECT ${selectBody} FROM ${tableName} WHERE ${conditionsBody}`;
+    } catch (error) {
+        console.log(error); //KIV, to find a solution to handle the error better
+        return "ERROR";
+    }
+  }
