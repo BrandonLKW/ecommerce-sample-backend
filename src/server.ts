@@ -6,6 +6,7 @@ dotenv.config();
 const path = require("path");
 const productRouter = require("./routers/productRouter");
 const orderRouter = require("./routers/orderRouter");
+const metricRouter = require("./routers/metricRouter");
 
 const server: Express = express();
 
@@ -16,6 +17,7 @@ server.use(express.static(path.join(__dirname, "dist")));
 //routes block
 server.use("/api/product", productRouter);
 server.use("/api/order", orderRouter);
+server.use("/api/metric", metricRouter);
 server.get("/test", (_req: Request, res: Response) => {
     res.json({ hello: "world" });  
 });
