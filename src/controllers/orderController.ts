@@ -1,6 +1,7 @@
 import { Response, Request } from "express";
 import * as orderSchema from "../schema/Order";
 import * as orderItemSchema from "../schema/OrderItem";
+import * as jwtHelper from "../util/jwtHelper";
 import * as queryHelper from "../util/queryHelper";
 
 const orderdb = require("../../database/database");
@@ -8,7 +9,7 @@ const orderdb = require("../../database/database");
 const orderTableStr = "public.order";
 const orderItemTableStr = "public.order_item";
 
-const getAllOrders = async (req: Response, res: Request) => {
+export const getAllOrders = async (req: Request, res: Response) => {
     try {
         const queryStr = `SELECT * FROM ${orderTableStr}`;
         const response = await orderdb.query(queryStr);
@@ -18,7 +19,7 @@ const getAllOrders = async (req: Response, res: Request) => {
     }
 }
 
-const getOrdersByStatus = async (req: Response, res: Request) => {
+export const getOrdersByStatus = async (req: Request, res: Response) => {
     try {
         const { status } = req.params;
         const selectFields = ["*"]; //grab entire order row
@@ -37,7 +38,29 @@ const getOrdersByStatus = async (req: Response, res: Request) => {
     }
 }
 
-const getOrderItemsByOrderId = async (req: Response, res: Request) => {
+export const getOrdersByUser = async (req: Request, res: Response) => {
+    try {
+        //Check token to verify and for id
+        const token = req.header("auth-token");
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        //Build and execute query
+        const selectFields = ["*"]; //grab entire order row
+        const conditions = {
+            user_id: decoded.body.id
+        }
+        const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions);
+        const response = await orderdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error running getOrders with query: ${queryStr}`);
+        }
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}
+
+export const getOrderItemsByOrderId = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const selectFields = ["*"];
@@ -56,7 +79,7 @@ const getOrderItemsByOrderId = async (req: Response, res: Request) => {
     }
 }
 
-const addOrder = async (req: Response, res: Request) => {
+export const addOrder = async (req: Request, res: Response) => {
     try {
         const validateOrder = orderSchema.validate(req.body);
         if (validateOrder.error){
@@ -118,7 +141,7 @@ const addOrder = async (req: Response, res: Request) => {
     }
 }
 
-const updateOrder = async (req: Response, res: Request) => {
+export const updateOrder = async (req: Request, res: Response) => {
     try {
         const validateOrder = orderSchema.validate(req.body);
         if (validateOrder.error){
@@ -184,7 +207,7 @@ const updateOrder = async (req: Response, res: Request) => {
     }
 }
 
-const deleteOrder = async (req: Response, res: Request) => {
+export const deleteOrder = async (req: Request, res: Response) => {
     try {
         const validateProduct = orderSchema.validate(req.body);
         if (validateProduct.error){
@@ -205,12 +228,3 @@ const deleteOrder = async (req: Response, res: Request) => {
 
     }
 }
-
-module.exports = {
-    getAllOrders,
-    getOrdersByStatus,
-    getOrderItemsByOrderId,
-    addOrder,
-    updateOrder,
-    deleteOrder
-};
