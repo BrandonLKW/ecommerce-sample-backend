@@ -81,6 +81,10 @@ export const getOrderItemsByOrderId = async (req: Request, res: Response) => {
 
 export const addOrder = async (req: Request, res: Response) => {
     try {
+        //Check token to verify and for id
+        const token = req.header("auth-token");
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        //Build and execute query
         const validateOrder = orderSchema.validate(req.body);
         if (validateOrder.error){
             return res.status(422).json({error: validateOrder.error.message});
@@ -108,13 +112,14 @@ export const addOrder = async (req: Request, res: Response) => {
             excludedChildren.push("orderItemList");
         }
         //Remove defined children from parent, to be constructed in a separate sub query in the helper
-        const parent = Object.fromEntries(
+        let parent = Object.fromEntries(
             Object.entries(validateOrder.value).filter(
                 ([key]) =>
                     !Object.keys(children).includes(key) &&
                     !excludedChildren.includes(key)
             )
         );
+        Object.assign(parent, {user_id: decoded.body.id}); //add user reference as well
         let queryStr = "";
         if (Object.keys(children).length > 0) {
             queryStr = queryHelper.createInsertWithChildrenStatement(
@@ -137,7 +142,7 @@ export const addOrder = async (req: Request, res: Response) => {
             throw new Error(`Error adding product with query: ${queryStr}`);
         }
     } catch (error) {
-        console.log(error);
+        res.status(500).json({ error });
     }
 }
 
@@ -203,7 +208,7 @@ export const updateOrder = async (req: Request, res: Response) => {
             throw new Error(`Error updating product with query: ${queryStr}`);
         }
     } catch (error) {
-        console.log(error);
+        res.status(500).json({ error });
     }
 }
 
@@ -225,6 +230,6 @@ export const deleteOrder = async (req: Request, res: Response) => {
             throw new Error(`Error updating product with query: ${queryStr}`);
         }
     } catch (error) {
-
+        res.status(500).json({ error });
     }
 }
