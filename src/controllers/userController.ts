@@ -8,12 +8,16 @@ const userdb = require("../../database/database");
 
 const userTableStr = "public.user"
 
-export const getUserById = async (req: Request, res: Response) => {
+//https://stackoverflow.com/questions/73740926/send-jwt-to-api-in-request-header-from-reactjs-frontend
+export const getUser = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const { token } = req.params;
+        //Check token
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        //Build and fire query
         const selectFields = ["*"];
         const conditions = {
-            id: id
+            id: decoded.id //assume id of user table available, error is also thrown if verification failed
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(userTableStr, selectFields, conditions);
         const response = await userdb.query(queryStr);
@@ -89,7 +93,9 @@ export const addUser = async (req: Request, res: Response) => {
             throw new Error("Unable to add new User");
         }
         if (insertResponse.rows.length > 0){
-            res.status(201).json(insertResponse.rows);
+            const userId = insertResponse.rows[0];
+            const token = jwtHelper.createJwtToken(userId);
+            res.status(201).json({ token: token}); //create token with userid to allow future calls
         } else{
             res.status(500).json({ message: "Error adding User" });
         }
