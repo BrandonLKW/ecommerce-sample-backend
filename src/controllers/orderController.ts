@@ -19,7 +19,7 @@ export const getOrdersByStatus = async (req: Request, res: Response) => {
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions);
         const response = await orderdb.query(queryStr);
-        if (response.rows.length > 0){
+        if (response.rows){
             res.status(201).json(response.rows);
         } else {
             throw new Error(`Error running getOrders with query: ${queryStr}`);
@@ -42,9 +42,8 @@ export const getOrdersByUser = async (req: Request, res: Response) => {
             status: status
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions);
-        console.log(queryStr);
         const response = await orderdb.query(queryStr);
-        if (response.rows.length > 0){
+        if (response.rows){
             res.status(201).json(response.rows);
         } else {
             throw new Error(`Error running getOrders with query: ${queryStr}`);
@@ -63,7 +62,7 @@ export const getOrderItemsByOrderId = async (req: Request, res: Response) => {
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(orderItemTableStr, selectFields, conditions);
         const response = await orderdb.query(queryStr);
-        if (response.rows.length > 0){
+        if (response.rows){
             res.status(201).json(response.rows);
         } else {
             throw new Error(`Error running getOrderItems with query: ${queryStr}`);
