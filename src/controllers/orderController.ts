@@ -3,21 +3,12 @@ import * as orderSchema from "../schema/Order";
 import * as orderItemSchema from "../schema/OrderItem";
 import * as jwtHelper from "../util/jwtHelper";
 import * as queryHelper from "../util/queryHelper";
+import * as errorHelper from "../util/errorHelper";
 
 const orderdb = require("../../database/database");
 
 const orderTableStr = "public.order";
 const orderItemTableStr = "public.order_item";
-
-export const getAllOrders = async (req: Request, res: Response) => {
-    try {
-        const queryStr = `SELECT * FROM ${orderTableStr}`;
-        const response = await orderdb.query(queryStr);
-        res.status(201).json(response.rows);
-    } catch (error) {
-        res.status(500).json({ error });
-    }
-}
 
 export const getOrdersByStatus = async (req: Request, res: Response) => {
     try {
@@ -34,7 +25,7 @@ export const getOrdersByStatus = async (req: Request, res: Response) => {
             throw new Error(`Error running getOrders with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }
 
@@ -44,11 +35,14 @@ export const getOrdersByUser = async (req: Request, res: Response) => {
         const token = req.header("auth-token");
         const decoded: any = jwtHelper.verifyJwtToken(token); 
         //Build and execute query
+        const { status } = req.params;
         const selectFields = ["*"]; //grab entire order row
         const conditions = {
-            user_id: decoded.body.id
+            user_id: decoded.body.id,
+            status: status
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(orderTableStr, selectFields, conditions);
+        console.log(queryStr);
         const response = await orderdb.query(queryStr);
         if (response.rows.length > 0){
             res.status(201).json(response.rows);
@@ -56,7 +50,7 @@ export const getOrdersByUser = async (req: Request, res: Response) => {
             throw new Error(`Error running getOrders with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }
 
@@ -75,7 +69,7 @@ export const getOrderItemsByOrderId = async (req: Request, res: Response) => {
             throw new Error(`Error running getOrderItems with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }
 
@@ -142,12 +136,16 @@ export const addOrder = async (req: Request, res: Response) => {
             throw new Error(`Error adding product with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }
 
 export const updateOrder = async (req: Request, res: Response) => {
     try {
+        //Check token to verify and for id
+        const token = req.header("auth-token");
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        //Build and execute query
         const validateOrder = orderSchema.validate(req.body);
         if (validateOrder.error){
             return res.status(422).json({error: validateOrder.error.message});
@@ -166,7 +164,8 @@ export const updateOrder = async (req: Request, res: Response) => {
                         if (validateOrderItem.error) {
                             throw Error(validateOrderItem.error.message);
                         }
-                        return validateOrderItem.value;
+                        Object.assign(validateOrderItem.value, {id: (item as any).id}); 
+                        return validateOrderItem.value; //Pass the original obj after validation
                     }),
                 },
             };
@@ -201,6 +200,7 @@ export const updateOrder = async (req: Request, res: Response) => {
                 "id"
             );
         }
+        console.log(queryStr);
         const response = await orderdb.query(queryStr);
         if (response.rows.length > 0){
             res.status(201).json(response.rows);
@@ -208,7 +208,7 @@ export const updateOrder = async (req: Request, res: Response) => {
             throw new Error(`Error updating product with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }
 
@@ -230,6 +230,6 @@ export const deleteOrder = async (req: Request, res: Response) => {
             throw new Error(`Error updating product with query: ${queryStr}`);
         }
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json(errorHelper.createErrorMessage(error));
     }
 }

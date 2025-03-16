@@ -72,7 +72,7 @@ export function createInsertMultipleStatement(
                 valuesBody = valuesBody.concat(",");
             }
         });
-        return `INSERT INTO ${tableName} (${columns}) VALUES ${valuesBody} RETURNING 'SUCCESS'`;
+        return `INSERT INTO ${tableName} (${columns}) VALUES ${valuesBody}`;
     } catch (error) {
         console.log(error);; //KIV, to find a solution to handle the error better
         return "ERROR";
@@ -251,7 +251,7 @@ export function createUpdateMultipleStatement(
                 conditionsBody = conditionsBody.concat(`AND `);
             }
         });
-        return `UPDATE ${tableName} AS table1 SET ${colNameBody} FROM (VALUES ${colValuesBody}) AS table2(${colName2Body}) WHERE ${conditionsBody} RETURNING 'SUCCESS'`;
+        return `UPDATE ${tableName} AS table1 SET ${colNameBody} FROM (VALUES ${colValuesBody}) AS table2(${colName2Body}) WHERE ${conditionsBody}`;
     } catch (error) {
         console.log(error); //KIV, to find a solution to handle the error better
         return "ERROR";
@@ -389,7 +389,7 @@ export function createSelectWithConditionsStatement(
         Object.entries(conditions).forEach(([key, value], index) => {
             conditionsBody = conditionsBody.concat(`${key} = '${value}'`);
             if (index < Object.keys(conditions).length - 1) {
-                conditionsBody = conditionsBody.concat(", ");
+                conditionsBody = conditionsBody.concat("AND ");
             }
         });
         return `SELECT ${selectBody} FROM ${tableName} WHERE ${conditionsBody}`;
