@@ -11,22 +11,16 @@ const userTableStr = "public.user"
 //https://stackoverflow.com/questions/73740926/send-jwt-to-api-in-request-header-from-reactjs-frontend
 export const getUser = async (req: Request, res: Response) => {
     try {
-        const { token } = req.params;
+        const token = req.header("auth-token");
         //Check token
         const decoded: any = jwtHelper.verifyJwtToken(token); 
         //Build and fire query
         const selectFields = ["*"];
         const conditions = {
-            id: decoded.id //assume id of user table available, error is also thrown if verification failed
+            id: decoded.body.id //assume id of user table available, error is also thrown if verification failed
         }
         const queryStr = queryHelper.createSelectWithConditionsStatement(userTableStr, selectFields, conditions);
         const response = await userdb.query(queryStr);
-        if (response.rows.length > 0){
-            const userObj = response.rows[0];
-            const token = jwtHelper.createJwtToken(userObj);
-            userObj.token = token;
-            res.status(201).json(userObj);
-        } 
         if (response.rows.length > 0){
             res.status(201).json(response.rows);
         } else {

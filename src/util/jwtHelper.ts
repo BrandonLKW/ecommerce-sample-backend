@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt" //https://www.npmjs.com/package/bcrypt
 
 const jwtKey = process.env.JWT_SECRET!;
-const jwtExpiry = "24h";
+const jwtExpiry = "1h";
 
 export const createJwtToken = (body: Object) => {
     return jwt.sign(
@@ -27,3 +27,5 @@ export const comparePassword = async (
 ): Promise<boolean> => {
     return await bcrypt.compare(password, hashedPassword);
 };
+
+//Ref: https://github.com/auth0/node-jsonwebtoken/blob/master/README.md
