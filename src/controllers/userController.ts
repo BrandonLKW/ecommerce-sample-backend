@@ -34,7 +34,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const getUserByEmailAndPass = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.params;
-        const selectFields = ["*"];
+        const selectFields = ["*"]; //limit certain fields to be returned
         const conditions = {
             email: email
         }
@@ -48,7 +48,15 @@ export const getUserByEmailAndPass = async (req: Request, res: Response) => {
                 res.status(401).json({ msg: "Wrong password" });
                 return;
             }
-            const userObj = response.rows[0]; 
+            //Choose specific fields to return for privacy/security purposes
+            const userObj = {
+                id : response.rows[0].id,
+                account_type: response.rows[0].account_type,
+                name_first: response.rows[0].name_first,
+                name_last: response.rows[0].name_last,
+                email: response.rows[0].email,
+                token: ""
+            }; 
             userObj.token = jwtHelper.createJwtToken(userObj);
             res.status(201).json(userObj);
         } else{
@@ -75,8 +83,8 @@ export const addUser = async (req: Request, res: Response) => {
         if (!emailResponse){
             throw new Error("Unable to verify Email details");
         }
-        if (emailResponse.rows.length > 0){
-            res.status(204).json({ message: "Email already exists." });
+        if (emailResponse.rows[0]){
+            res.status(201).json({ message: "Email already exists." }); //any records means email exists
             return;
         }
         //Hash password and add user
@@ -86,10 +94,8 @@ export const addUser = async (req: Request, res: Response) => {
         if (!insertResponse){
             throw new Error("Unable to add new User");
         }
-        if (insertResponse.rows.length > 0){
-            const userId = insertResponse.rows[0];
-            const token = jwtHelper.createJwtToken(userId);
-            res.status(201).json({ token: token}); //create token with userid to allow future calls
+        if (insertResponse.rows[0]){
+            res.status(201).json({ message: "SUCCESS"});
         } else{
             res.status(500).json({ message: "Error adding User" });
         }
