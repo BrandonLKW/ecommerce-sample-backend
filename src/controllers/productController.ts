@@ -81,7 +81,7 @@ export const addProduct = async (req: Request, res: Response) => {
 }
 
 export const updateProduct = async (req: Request, res: Response) => {
-    try{
+    try {
         //Check token
         const token = req.header("auth-token");
         const decoded: any = jwtHelper.verifyJwtToken(token); 
@@ -108,8 +108,34 @@ export const updateProduct = async (req: Request, res: Response) => {
     }
 }
 
+export const subtractProductQuantity = async (req: Request, res: Response) => {
+    try {
+        //Check token
+        const token = req.header("auth-token");
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        //
+        const { id, quantity } = req.body;
+        const queryStr = `UPDATE ${productTableStr} SET quantity = quantity - ${quantity} WHERE id = ${id} returning id`;
+        console.log(queryStr);
+        const response = await productdb.query(queryStr);
+        if (response.rows.length > 0){
+            res.status(201).json(response.rows);
+        } else {
+            throw new Error(`Error updating product with query: ${queryStr}`);
+        }
+    } catch (error) {
+        res.status(500).json(errorHelper.createErrorMessage(error));
+    }
+}
+
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
+        //Check token
+        const token = req.header("auth-token");
+        const decoded: any = jwtHelper.verifyJwtToken(token); 
+        if (decoded.body.account_type !== "ADMIN"){
+            throw new Error(`Current User is not allowed to update Products!`);
+        }
         const validateProduct = productSchema.validate(req.body);
         if (validateProduct.error){
             return res.status(422).json({error: validateProduct.error.message});
