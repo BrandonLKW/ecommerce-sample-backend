@@ -2,11 +2,11 @@ import Joi from "joi";
 import { OrderItemSchema } from "./OrderItem";
 
 export const OrderSchema = Joi.object().keys({
-    id: Joi.number().optional().allow(0).strip(), //strip id here to facilitate queryHelper.ts methods
-    user_id: Joi.number().optional().allow(null, ""),
-    created_date: Joi.string().optional().allow(null, ""),
+    id: Joi.number().required().allow(0).strip(), //strip id here to facilitate queryHelper.ts methods
+    user_id: Joi.number().required(),
+    created_date: Joi.string().required(),
     completed_date: Joi.string().optional().allow(null, ""),
-    status: Joi.string().optional().allow(null, ""),
+    status: Joi.string().required(),
     orderItemList: Joi.array().items(OrderItemSchema).optional()
 });
 
