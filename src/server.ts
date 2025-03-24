@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const cors = require("cors");
 const path = require("path");
 const productRouter = require("./routers/productRouter");
 const orderRouter = require("./routers/orderRouter");
@@ -10,6 +11,7 @@ const metricRouter = require("./routers/metricRouter");
 const userRouter = require("./routers/userRouter");
 
 const server: Express = express();
+server.use(cors());
 
 //middleware block
 server.use(express.json());
